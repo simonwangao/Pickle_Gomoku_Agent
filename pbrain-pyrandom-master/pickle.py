@@ -1,8 +1,9 @@
 import random
 import pisqpipe as pp
 from pisqpipe import DEBUG_EVAL, DEBUG
+import utils
 
-pp.infotext = 'name="pbrain-pyrandom", author="Jan Stransky", version="1.0", country="Czech Republic", www="https://github.com/stranskyjan/pbrain-pyrandom"'
+pp.infotext = 'name="pbrain-pickle", author="Ao Wang", version="1.0", country="China"'
 
 MAX_BOARD = 100
 board = [[0 for i in range(MAX_BOARD)] for j in range(MAX_BOARD)]
@@ -50,21 +51,21 @@ def brain_takeback(x, y):
 		return 0
 	return 2
 
-def brain_turn():
-	if pp.terminateAI:
-		return
-	i = 0
-	while True:
-		x = random.randint(0, pp.width)
-		y = random.randint(0, pp.height)
-		i += 1
-		if pp.terminateAI:
-			return
-		if isFree(x,y):
-			break
-	if i > 1:
-		pp.pipeOut("DEBUG {} coordinates didn't hit an empty field".format(i))
-	pp.do_mymove(x, y)
+def brain_turn():	# change
+    if pp.terminateAI:
+        return
+    
+    current_board = [ [] for _ in range(pp.width) ]
+
+    for i in range(pp.width):
+        for j in range(pp.height):
+            current_board[i].append( board[i][j] )
+	
+    # empty:0, my:1, opponent:2
+    res = utils.my_move(current_board)
+    x, y = res
+
+    pp.do_mymove(x, y)
 
 def brain_end():
 	pass
@@ -87,9 +88,9 @@ if DEBUG_EVAL:
 # A possible way how to debug brains.
 # To test it, just "uncomment" it (delete enclosing """)
 ######################################################################
-"""
+'''
 # define a file for logging ...
-DEBUG_LOGFILE = "/tmp/pbrain-pyrandom.log"
+DEBUG_LOGFILE = "C:\\Users\\wanga\\Desktop\\pbrain-pickle.log"
 # ...and clear it initially
 with open(DEBUG_LOGFILE,"w") as f:
 	pass
@@ -111,15 +112,15 @@ def logTraceBack():
 # use logDebug wherever
 # use try-except (with logTraceBack in except branch) to get exception info
 # an example of problematic function
-def brain_turn():
-	logDebug("some message 1")
-	try:
-		logDebug("some message 2")
-		1. / 0. # some code raising an exception
-		logDebug("some message 3") # not logged, as it is after error
-	except:
-		logTraceBack()
-"""
+#def brain_turn():
+#	logDebug("some message 1")
+#	try:
+#		logDebug("some message 2")
+#		1. / 0. # some code raising an exception
+#		logDebug("some message 3") # not logged, as it is after error
+#	except:
+#		logTraceBack()
+'''
 ######################################################################
 
 # "overwrites" functions in pisqpipe module
