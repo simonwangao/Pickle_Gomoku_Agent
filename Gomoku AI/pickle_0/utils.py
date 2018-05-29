@@ -28,7 +28,8 @@ def logTraceBack():
 
 def get_around_info(board):
     '''
-    get the around information for every location
+    get the around information in four directions
+    for every location in the board
     '''
     width = len(board)
     height = len(board[0])
@@ -38,6 +39,7 @@ def get_around_info(board):
         for j in range(height):
             location = (i, j)   # also the key
             res = []
+
             #row
             start_j = max(j-4, 0)
             end_j = min(height, j+5)
@@ -48,6 +50,7 @@ def get_around_info(board):
             if j+4 >= height:
                 s = s+'*'
             res.append(s)
+
             #column
             start_i = max(0, i-4)
             end_i = min(width, i+5)
@@ -58,12 +61,12 @@ def get_around_info(board):
             if i+4 >= width:
                 s = s+'*'
             res.append(s)
+
             #left diagonal
             start_i = max(0, i-4)
             end_i = min(width, i+5)
             start_j = max(j-4, 0)
             end_j = min(height, j+5)
-            #s = [ str(board[x][y]) for x in range(start_i, end_i) for y in range(start_j, end_j) ] #wrong
             s, x, y = [], start_i, start_j
             while x < end_i and y < end_j:
                 s.append( str(board[x][y]) )
@@ -75,12 +78,12 @@ def get_around_info(board):
             if i+4>=width or j+4>=height:
                 s = s+'*'
             res.append(s)
+
             #right diagonal
             start_i = max(0, i-4)
             end_i = min(width, i+5)
             start_j = min(height-1, j+4)
             end_j = max(j-5, -1)
-            #s = [ str(board[x][y]) for x in range(start_i, end_i) for y in range(start_j, end_j) ]
             s, x, y = [], start_i, start_j
             while x < end_i and y > end_j:
                 s.append( str(board[x][y]) )
@@ -94,6 +97,73 @@ def get_around_info(board):
             res.append(s)
             dic[location] = res
     return dic
+
+def get_point_info(location, board):
+    '''
+    get the information in four directions
+    for one location
+    '''
+    width = len(board)
+    height = len(board[0])
+    i, j = location
+    res = []
+
+    #row
+    start_j = max(j-4, 0)
+    end_j = min(height, j+5)
+    s = [ str(board[i][temp]) for temp in range(start_j, end_j) ]
+    s = ''.join(s)
+    if j-4 < 0:
+        s = '*'+s   # boundary
+    if j+4 >= height:
+        s = s+'*'
+    res.append(s)
+
+    #column
+    start_i = max(0, i-4)
+    end_i = min(width, i+5)
+    s = [ str(board[temp][j]) for temp in range(start_i, end_i) ]
+    s = ''.join(s)
+    if i-4 < 0:
+        s = '*'+s
+    if i+4 >= width:
+        s = s+'*'
+    res.append(s)
+
+    #left diagonal
+    start_i = max(0, i-4)
+    end_i = min(width, i+5)
+    start_j = max(j-4, 0)
+    end_j = min(height, j+5)
+    s, x, y = [], start_i, start_j
+    while x < end_i and y < end_j:
+        s.append( str(board[x][y]) )
+        x += 1
+        y += 1
+    s = ''.join(s)
+    if i-4<0 or j-4<0:
+        s = '*'+s
+    if i+4>=width or j+4>=height:
+        s = s+'*'
+    res.append(s)
+
+    #right diagonal
+    start_i = max(0, i-4)
+    end_i = min(width, i+5)
+    start_j = min(height-1, j+4)
+    end_j = max(j-5, -1)
+    s, x, y = [], start_i, start_j
+    while x < end_i and y > end_j:
+        s.append( str(board[x][y]) )
+        x += 1
+        y -= 1
+    s = ''.join(s)
+    if i-4<0 or j+4>=height:
+        s = '*'+s
+    if i+4>=width or j-4<0:
+        s = s+'*'
+    res.append(s)
+    return res
 
 possible_states = ['win5', 'alive4', 'lian-rush4', 'tiao-rush4', 'lian-alive3', 'tiao-alive3', \
     'lian-sleep3', 'tiao-sleep3', 'te-sleep3', 'jia-alive3', 'alive2', 'sleep2', 'alive1', 'nothreat']
@@ -163,13 +233,13 @@ def my_state_string_to_dic(string_lis):
     return res
 
 def my_score(res):
-    score = 1000000*res['win5'] + 200000*res['alive4'] + \
-                66000*res['lian-rush4'] + 65000*res['tiao-rush4'] + \
-                15000*res['lian-alive3'] + 14000*res['tiao-alive3'] + \
-                6000*res['lian-sleep3'] + 6000*res['tiao-sleep3'] + \
-                6000*res['te-sleep3'] + 9000*res['jia-alive3'] + \
-                3000*res['alive2'] + 1000*res['sleep2'] + \
-                300*res['alive1'] + 1*res['nothreat']
+    score = 1000000*res['win5'] + 30000*res['alive4'] + \
+                6100*res['lian-rush4'] + 6000*res['tiao-rush4'] + \
+                3000*res['lian-alive3'] + 2500*res['tiao-alive3'] + \
+                700*res['lian-sleep3'] + 600*res['tiao-sleep3'] + \
+                600*res['te-sleep3'] + 600*res['jia-alive3'] + \
+                400*res['alive2'] + 300*res['sleep2'] + \
+                180*res['alive1'] + 10*res['nothreat']
     return score
 
 def my_point_score(location, board):
@@ -184,8 +254,7 @@ def my_point_score(location, board):
     changed_board = copy.deepcopy(board)
     changed_board[x][y] = 1 # if we put the stone in location
 
-    dic = get_around_info(changed_board)
-    string_lis = dic[location]  # the info strings on four directions
+    string_lis = get_point_info(location, changed_board)  # the info strings on four directions
     res = my_state_string_to_dic(string_lis)
 
     # calculate score using dict res
@@ -278,13 +347,17 @@ def opponent_state_string_to_dic(string_lis):
     return res
 
 def opponent_score(res):
-    score = 1000000*res['win5'] + 150000*res['alive4'] + \
-                55000*res['lian-rush4'] + 50000*res['tiao-rush4'] + \
-                11000*res['lian-alive3'] + 10000*res['tiao-alive3'] + \
-                5000*res['lian-sleep3'] + 5000*res['tiao-sleep3'] + \
-                5000*res['te-sleep3'] + 9500*res['jia-alive3'] + \
-                1000*res['alive2'] + 800*res['sleep2'] + \
-                200*res['alive1'] + 1*res['nothreat']
+    '''
+    The corresponding score has to higher than my_score,
+    because the score means that IF we put the stone here
+    '''
+    score = 10000000*res['win5'] + 500000*res['alive4'] + \
+                7000*res['lian-rush4'] + 6000*res['tiao-rush4'] + \
+                2500*res['lian-alive3'] + 2000*res['tiao-alive3'] + \
+                600*res['lian-sleep3'] + 500*res['tiao-sleep3'] + \
+                500*res['te-sleep3'] + 500*res['jia-alive3'] + \
+                350*res['alive2'] + 290*res['sleep2'] + \
+                100*res['alive1'] + 10*res['nothreat']
     return score
 
 def opponent_point_score(location, board):
@@ -299,9 +372,7 @@ def opponent_point_score(location, board):
     changed_board = copy.deepcopy(board)
     changed_board[x][y] = 2 # if opponent puts the stone in location
 
-    dic = get_around_info(changed_board)
-
-    string_lis = dic[location]  # the info strings on four directions
+    string_lis = get_point_info(location, changed_board)  # the info strings on four directions
     res = opponent_state_string_to_dic(string_lis)
 
     # calculate score using dict res
@@ -355,8 +426,8 @@ def my_move(board):
         return random.choice(feasible)
 
     # score 
-    my_matrix = my_score_matrix(board) #change!
-    opponent_matrix = opponent_score_matrix(board)
+    my_matrix = my_score_matrix(board) # heavy
+    opponent_matrix = opponent_score_matrix(board)  # heavy
 
     my_max = -1
     oppo_max = -1
