@@ -35,9 +35,6 @@ def create_G(num):
     return res_dic
 
 if __name__ == '__main__':
-    # create g5, g6, g7
     pass
-
-
 
 
