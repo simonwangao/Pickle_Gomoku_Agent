@@ -1,12 +1,14 @@
 import random
 import pisqpipe as pp
 from pisqpipe import DEBUG_EVAL, DEBUG
+import threat_space_search as TSS
 
-pp.infotext = 'name="pbrain-pickle", author="Ao Wang", version="1.0", country="China"'
+pp.infotext = 'name="pickle", author="Ao Wang", version="1.0", country="China"'
 
 MAX_BOARD = 100
 board = [[0 for i in range(MAX_BOARD)] for j in range(MAX_BOARD)]
 
+#C:\Users\wanga\AppData\Local\Programs\Python\Python36\Scripts\pyinstaller.exe
 
 def brain_init():
 	if pp.width < 5 or pp.height < 5:
@@ -50,21 +52,21 @@ def brain_takeback(x, y):
 		return 0
 	return 2
 
-def brain_turn():	#change
-	if pp.terminateAI:
-		return
-	i = 0
-	while True:
-		x = random.randint(0, pp.width)
-		y = random.randint(0, pp.height)
-		i += 1
-		if pp.terminateAI:
-			return
-		if isFree(x,y):
-			break
-	if i > 1:
-		pp.pipeOut("DEBUG {} coordinates didn't hit an empty field".format(i))
-	pp.do_mymove(x, y)
+def brain_turn():	# change
+    if pp.terminateAI:
+        return
+    
+    current_board = [ [] for _ in range(pp.width) ]
+    
+    for i in range(pp.width):
+        for j in range(pp.height):
+            current_board[i].append( board[i][j] )
+	
+    pro = TSS.Problem(pp.width, TSS.AI(), current_board)
+    res = pro.my_move()
+    x, y = res
+    
+    pp.do_mymove(x, y)
 
 def brain_end():
 	pass

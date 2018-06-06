@@ -4,7 +4,6 @@ import copy
 import math
 from collections import defaultdict
 #import pisqpipe as pp
-import const
 import utils
 
 '''
@@ -78,19 +77,15 @@ class Node(object):
         self.turn = turn    # used for choosing score matrix in children generation
         self.lastmove = lastmove    # last move to cause current board
 
-def evaluate(node):
+def evaluate(node): # heuristic
     if len(node.children) == 0: #leaf node
-        boo, winner = win_judge(node.board)
-
+        '''
         if boo:
             for thing in node.board:
                 print (thing)
             print ('\n')
-
-
-
-
-
+        '''
+        boo, winner = win_judge(node.board)
         if boo and winner == 1:
             node.value = 'true' # my
         elif boo and winner == 2:
@@ -169,16 +164,16 @@ def generate_children(node, num=10):
         raise Exception("Already have childern! In function: generate_children")
 
     board = copy.deepcopy(node.board)
-    if node.turn == 1:
-        score_matrix = utils.my_score_matrix(board)
-    elif node.turn == 2:
-        score_matrix = utils.opponent_score_matrix(board)
+    score_matrix1 = utils.my_score_matrix(board)
+    score_matrix2 = utils.opponent_score_matrix(board)
     
     width, height = len(board), len(board[0])
     score_lis = []
     for i in range(width):
         for j in range(height):
-            score_lis.append( [score_matrix[i][j], (i, j) ] )
+            score_lis.append( (score_matrix1[i][j], (i, j) ) )
+            score_lis.append( (score_matrix2[i][j], (i, j) ) )
+    score_lis = list(set(score_lis))
     score_lis.sort(reverse=True)
     score_lis = score_lis[:num] #top num
 
@@ -191,9 +186,9 @@ def generate_children(node, num=10):
     for _, location in score_lis:
         new_board = copy.deepcopy(board)
         new_board[ location[0] ][ location[1] ] = node.turn #??? it's parent's turn
-        child = Node(node_type=child_type, parent=node, board=new_board, turn=child_turn, lastmove=location)
+        child = Node(node_type=child_type, parent=node, board=new_board, turn=child_turn, lastmove=location, children=[])
         node.children.append(child) #problem
-        child.children = []
+        #child.children = [] # can't omit
 
 def expand_node(node):
     generate_children(node)
@@ -235,7 +230,51 @@ def pn_search(board):
         root.value = 'false'
     else:
         root.value = 'unknown'
-    return root.value
+    return root
+
+def my_move(board):
+    width = len(board)
+    height = len(board[0])
+
+    # start
+    tmp1 = [ sum(lis) for lis in board ]
+    tmp2 = sum (tmp1)
+    if tmp2 == 0:
+        # my first
+        x = int(width/2)
+        y = int(height/2)
+        return (x, y)
+    if tmp2 == 2:
+        # opponent first
+        m = tmp1.index(2)
+        row = board[m]
+        n = row.index(2)
+        lis = [ (m-1,n), (m+1,n), (m,n-1), (m,n+1)] # no diagonal
+        feasible = []
+        for pair in lis:
+            x, y = pair
+            if 0<= x < width and 0<= y < height:
+                feasible.append( (x, y) )
+        return random.choice(feasible)
+    
+    score_matrix1 = utils.my_score_matrix(board)
+    score_matrix2 = utils.opponent_score_matrix(board)
+    
+    score_lis = []
+    for i in range(width):
+        for j in range(height):
+            score_lis.append( (score_matrix1[i][j], (i, j) ) )
+            score_lis.append( (score_matrix2[i][j], (i, j) ) )
+    score_lis.sort(reverse=True)
+    for pair in score_lis:
+        new_board = copy.deepcopy(board)
+        location = pair[1]
+        new_board[location[0]][location[1]] == 1
+        node = pn_search(new_board)
+        if node.value == 'true':
+            return location
+    
+    return None
 
 
 if __name__ == '__main__':
@@ -247,8 +286,8 @@ if __name__ == '__main__':
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 1, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0],
@@ -261,6 +300,7 @@ if __name__ == '__main__':
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     ]
-    res = pn_search(board)
-    print (res)
+    #res = pn_search(board)
+    #print (res.value)
+    print (my_move(board))
 
