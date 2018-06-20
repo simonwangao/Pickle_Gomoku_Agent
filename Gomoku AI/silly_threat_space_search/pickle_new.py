@@ -1,4 +1,3 @@
-import random
 import pisqpipe as pp
 from pisqpipe import DEBUG_EVAL, DEBUG
 import threat_space_search as TSS

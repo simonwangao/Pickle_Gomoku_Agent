@@ -1,6 +1,5 @@
-import random
-import copy
-import math
+from random import choice
+from copy import deepcopy
 import utils
 
 # This AI will decide a move based on the following order of steps:
@@ -94,7 +93,7 @@ class Problem:
                     for each in indices:
                         best_threat.append(k[each])
                     #print("Best Placements: ",best_threat)
-                    AI_pos = random.choice(best_threat)
+                    AI_pos = choice(best_threat)
         # we will run the AI method here
         elif len([ num for num in [ num for lis in self.board for num in lis] if num!=0 ]) == 1:
             AI_pos = self.AI.maximise_own(self.board, self.p1_c, self.AI_c, 2)
@@ -119,7 +118,7 @@ class Problem:
                     elif y != False and z == False:
                         merged_threat = y
                     elif y != False and z != False:
-                        merged_threat = {**x, **y, **z}
+                        merged_threat = {**y, **z}  # problem_fixed
                 #print(merged_threat)
                 v = list(merged_threat.values())
                 k = list(merged_threat.keys())
@@ -129,7 +128,7 @@ class Problem:
                 for each in indices:
                     best_threat.append(k[each])
                 #print("Best Placements: ",best_threat)
-                AI_pos = random.choice(best_threat)
+                AI_pos = choice(best_threat)
             else:
                 root_node = self.AI.node(None)
                 sol = self.AI.threat_space_search(self.board, root_node, self.p1_c, self.AI_c, self.size)
@@ -141,7 +140,20 @@ class Problem:
                     AI_pos = self.sol_seq.pop(0)
                 else:
                     AI_pos = self.AI.maximise_own(self.board, self.p1_c, self.AI_c, self.turn)
-                    
+                    '''
+                    width, height = len(self.board), len(self.board[0])
+                    score_matrix1 = utils.my_score_matrix(self.board)
+                    score_matrix2 = utils.opponent_score_matrix(self.board)
+                    score_lis = []
+                    for i in range(width):
+                        for j in range(height):
+                            max_ = max(score_matrix1[i][j], score_matrix2[i][j])
+                            min_ = min(score_matrix1[i][j], score_matrix2[i][j])
+                            score_lis.append( ( max_, min_, (i, j) ) )
+                    score_lis.sort(reverse=True)
+                    AI_pos = score_lis[0][2]
+                    '''
+                            
         return AI_pos
         
 
@@ -239,11 +251,11 @@ class AI:
         elif length == 7:
             x = self.three(array, opp)
             if x[0]:
-                y = random.choice([x[1],x[2]])
+                y = choice([x[1],x[2]])
                 return [True, y, 4]
             x = self.three(array, colour)
             if x[0]:
-                y = random.choice([x[1],x[2]])
+                y = choice([x[1],x[2]])
                 return [True, y, 6]            
         return [False]
 
@@ -341,23 +353,41 @@ class AI:
                         max_ = max(score_matrix1[i][j], score_matrix2[i][j])
                         min_ = min(score_matrix1[i][j], score_matrix2[i][j])
                         score_lis.append( ( max_, min_, (i, j) ) )
+                        '''
+                        num = score_matrix1[i][j] + score_matrix2[i][j]
+                        score_lis.append( ( num, (i, j) ) )
+                        '''
                 score_lis.sort(reverse=True)
+
+                #count = 10
+                #score_lis = score_lis[:count]
+                #res_lis = [ pair[1] for pair in score_lis ]
+                
                 count = 0
                 res_lis = []
                 for i in range(len(score_lis)):
-                    if count == 10:
+                    if count == 9: # change
                         break
                     _, _, location = score_lis[i]
                     res = utils.get_neighbors(location, old_board)
                     if sum([ sum(lis) for lis in res ]) > 0:    # not so empty
-                        res_lis.append(score_lis[i])
+                        res_lis.append(location[:])
                         count += 1
+                res_lis.sort()
 
+                '''
+                res_lis = []
+                for i in range(len(score_lis)):
+                    _, _, location = score_lis[i]
+                    m, n = location
+                    res = utils.get_neighbors(location, old_board)
+                    if sum([ sum(lis) for lis in res ]) > 0:    # not so empty
+                        res_lis.append(score_lis[i][2][:])
+                '''
+                
                 for pair in res_lis:
-                    _, _, location = pair
-                    i, j = location
-                    # change
-                    modified_board = copy.deepcopy(old_board)
+                    i, j = pair
+                    modified_board = deepcopy(old_board)
                     modified_board[i][j] = AI_c
                     bool_l = 0
                     bool_ll = 0
@@ -577,7 +607,12 @@ class AI:
                 if k[each][0] >= 0 and k[each][1] >=0:
                     best_score.append(k[each])
             ##print("Best Placements: ",best_score)
-            return random.choice(best_score)
+            for pair in best_score:
+                res = utils.get_neighbors(pair, board)
+                if sum( [ sum(lis) for lis in res ] ) > 0:
+                    return pair
+
+            #return choice(best_score)
 
     def check_surroundings(self, board, colour, row, col):
         ## Basically, given a possible position you can place your seed,
@@ -769,10 +804,10 @@ if __name__ == '__main__':
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

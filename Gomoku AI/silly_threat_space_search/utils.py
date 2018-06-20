@@ -1,7 +1,5 @@
-import random
-import time
-import copy
-import math
+from random import choice
+from copy import deepcopy
 from collections import defaultdict
 #import pisqpipe as pp
 
@@ -249,6 +247,7 @@ def my_state_string_to_dic(string_lis):
     return res
 
 def my_score(res):
+    '''
     score = 1100000*res['win5'] + 50000*res['alive4'] + \
                 6100*res['lian-rush4'] + 6000*res['tiao-rush4'] + \
                 3000*res['lian-alive3'] + 2500*res['tiao-alive3'] + \
@@ -256,6 +255,14 @@ def my_score(res):
                 600*res['te-sleep3'] + 600*res['jia-alive3'] + \
                 400*res['alive2'] + 300*res['sleep2'] + \
                 180*res['alive1'] + 10*res['nothreat']
+    '''
+    score = 1100000*res['win5'] + 6000*res['alive4'] + \
+                5100*res['lian-rush4'] + 5000*res['tiao-rush4'] + \
+                4500*res['lian-alive3'] + 4500*res['tiao-alive3'] + \
+                3500*res['lian-sleep3'] + 3000*res['tiao-sleep3'] + \
+                2800*res['te-sleep3'] + 2800*res['jia-alive3'] + \
+                2500*res['alive2'] + 2500*res['sleep2'] + \
+                1900*res['alive1'] + 1000*res['nothreat']
     return score
 
 def my_point_score(location, board):
@@ -267,7 +274,7 @@ def my_point_score(location, board):
     x, y = location
     if board[x][y] != 0:
         return 0    # if the location is not empty, then the score is 0 
-    changed_board = copy.deepcopy(board)
+    changed_board = deepcopy(board)
     changed_board[x][y] = 1 # if we put the stone in location
 
     string_lis = get_point_info(location, changed_board)  # the info strings on four directions
@@ -364,16 +371,25 @@ def opponent_state_string_to_dic(string_lis):
 
 def opponent_score(res):
     '''
-    The corresponding score has to higher than my_score,
+    The corresponding score has to be higher than my_score,
     because the score means that IF we put the stone here
+    '''
     '''
     score = 1000000*res['win5'] + 30000*res['alive4'] + \
                 7000*res['lian-rush4'] + 6000*res['tiao-rush4'] + \
                 2500*res['lian-alive3'] + 2000*res['tiao-alive3'] + \
-                600*res['lian-sleep3'] + 500*res['tiao-sleep3'] + \
-                500*res['te-sleep3'] + 500*res['jia-alive3'] + \
-                350*res['alive2'] + 290*res['sleep2'] + \
-                100*res['alive1'] + 10*res['nothreat']
+                800*res['lian-sleep3'] + 700*res['tiao-sleep3'] + \
+                700*res['te-sleep3'] + 700*res['jia-alive3'] + \
+                500*res['alive2'] + 350*res['sleep2'] + \
+                200*res['alive1'] + 10*res['nothreat']
+    '''
+    score = 1000000*res['win5'] + 7000*res['alive4'] + \
+                5300*res['lian-rush4'] + 5200*res['tiao-rush4'] + \
+                4700*res['lian-alive3'] +4700*res['tiao-alive3'] + \
+                3700*res['lian-sleep3'] + 3200*res['tiao-sleep3'] + \
+                3000*res['te-sleep3'] + 3000*res['jia-alive3'] + \
+                2600*res['alive2'] + 2600*res['sleep2'] + \
+                1900*res['alive1'] + 1000*res['nothreat']
     return score
 
 def opponent_point_score(location, board):
@@ -385,7 +401,7 @@ def opponent_point_score(location, board):
     x, y = location
     if board[x][y] != 0:
         return 0    # if the location is not empty, then the score is 0 
-    changed_board = copy.deepcopy(board)
+    changed_board = deepcopy(board)
     changed_board[x][y] = 2 # if opponent puts the stone in location
 
     string_lis = get_point_info(location, changed_board)  # the info strings on four directions
@@ -439,7 +455,7 @@ def my_move(board):
             x, y = pair
             if 0<= x < width and 0<= y < height:
                 feasible.append( (x, y) )
-        return random.choice(feasible)
+        return choice(feasible)
 
     # score 
     my_matrix = my_score_matrix(board) # heavy

@@ -79,13 +79,13 @@ class Node(object):
 
 def evaluate(node): # heuristic
     if len(node.children) == 0: #leaf node
+        boo, winner = win_judge(node.board)
         '''
         if boo:
             for thing in node.board:
                 print (thing)
             print ('\n')
         '''
-        boo, winner = win_judge(node.board)
         if boo and winner == 1:
             node.value = 'true' # my
         elif boo and winner == 2:
