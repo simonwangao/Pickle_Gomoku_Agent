@@ -38,7 +38,7 @@ class Pos(object):
 
 class Point(object):
     def __init__(self):
-        self.p = None   # Pos
+        self.p = Pos()   # Pos
         self.val = 0
 
 class Cell(object):
@@ -57,12 +57,12 @@ class Hashe(object):
 class Pv(object):
     def __init__(self):
         self.key = 0
-        self.best = None    # Pos
+        self.best = Pos()   # Pos
 
 class Line(object):
     def __init__(self):
         self.n = 0
-        self.moves = [ None for _ in range(MaxDepth) ]  # a list of Pos
+        self.moves = [ Pos() for _ in range(MaxDepth) ]  # a list of Pos
 
 class MoveList(object):
     def __init__(self):
@@ -70,30 +70,30 @@ class MoveList(object):
         self.n = 0
         self.index = 0
         self.first = False
-        self.hashMove = None    # Pos
-        self.moves = [ None for _ in range(64) ]    # a list of Pos
+        self.hashMove = Pos()    # Pos
+        self.moves = [ Pos() for _ in range(64) ]    # a list of Pos
 
 class Board(object):
     def __init__(self):
-        self.step = 0                                        # 棋盘落子数
-        self.size = 20                                       # 棋盘当前尺寸
-        self.b_start = 0                                     # 棋盘坐标索引
-        self.b_end = 0                                       # 棋盘坐标索引
-        self.zobristKey = 0                                  # 表示当前局面的zobristKey
+        self.step = 0                                           # 棋盘落子数
+        self.size = 20                                          # 棋盘当前尺寸
+        self.b_start = 0                                        # 棋盘坐标索引
+        self.b_end = 0                                          # 棋盘坐标索引
+        self.zobristKey = 0                                     # 表示当前局面的zobristKey
         self.zobrist = [ [ [ 0 for _ in range(MaxSize+4) ] for _ in range(MaxSize+4) ] for _ in range(3) ]   # zobrist键值表
         self.hashTable = [ Hashe() for _ in range(hashSize) ]   # 哈希表, Hashe
-        self.pvsTable = [ Pv() for _ in range(pvsSize) ]     # pvs置换表, Pv
+        self.pvsTable = [ Pv() for _ in range(pvsSize) ]        # pvs置换表, Pv
         self.typeTable = [ [ [ [ 0 for _ in range(3) ] for _ in range(6) ] for _ in range(6) ] for _ in range(10) ]  # 初级棋型表
         self.patternTable = [ [ 0 for _ in range(3) ] for _ in range(65536) ]    #完整棋型表
         self.pval = [ [ [ [ 0 for _ in range(8) ] for _ in range(8) ] for _ in range(8) ] for _ in range(8) ]    # 棋形分值表
         self.cell = [ [ Cell() for _ in range(MaxSize+8) ] for _ in range(MaxSize+8) ]   # 棋盘
         self.remMove = [ None for _ in range(MaxSize*MaxSize) ]     #记录落子
-        self.cand = [ Point() for _ in range(256) ]          # 临时存储合理着法(两格内有子)
+        self.cand = [ Point() for _ in range(256) ]             # 临时存储合理着法(两格内有子)
         self.IsLose = [ [ False for _ in range(MaxSize+4) ] for _ in range(MaxSize+4) ]  # 记录根节点的必败点
-        self.who = Me                                        # 下子方
-        self.opp = Opponent                                  # 另一方
-        self.rootMove = [ Point() for _ in range(64) ]       # 根节点着法
-        self.rootCount = 0                                   # 根节点着法个数
+        self.who = Me                                           # 下子方
+        self.opp = Opponent                                     # 另一方
+        self.rootMove = [ Point() for _ in range(64) ]          # 根节点着法
+        self.rootCount = 0                                      # 根节点着法个数
 
         self.InitType()
         self.InitPattern()
@@ -139,7 +139,7 @@ class Board(object):
                 self.zobrist[Me][i][j] = self.Rand64()
                 self.zobrist[Opponent][i][j] = self.Rand64()
 
-    @jit
+    #@jit
     def SetSize(self, size=20):
         self.size = size
         self.b_start = 4
@@ -194,12 +194,15 @@ class Board(object):
             self.DelMove()
     
     def ReStart(self):
+        '''
         self.zobristKey = 0
         self.hashTable = [ Hashe() for _ in range(hashSize) ]
         while self.step:
             self.DelMove()
+        '''
+        self.__init__()
     
-    @jit(nopython=True)
+    #@jit(nopython=True)
     def UpdateType(self, x, y):
         # 更新棋型
         a = 0
@@ -231,7 +234,7 @@ class Board(object):
                 b -= dy[i]
                 k += 1
     
-    @jit(nopython=True)
+    #@jit(nopython=True)
     def GetKey(self, x, y, i):
         # get the key on direction i
         # like encoding
@@ -276,7 +279,7 @@ class Board(object):
         else:
             return p2
     
-    @jit
+    #@jit
     def CheckFlex3(self, line):
         # 同线双三特判
         role = line[4]  # real number
@@ -289,7 +292,7 @@ class Board(object):
                     return flex3
         return block3
 
-    @jit
+    #@jit
     def CheckFlex4(self, line):
         # 同线双四特判
         five = 0
@@ -423,6 +426,24 @@ class Board(object):
                 for c in range(8):
                     for d in range(8):
                         self.pval[a][b][c][d] = self.GetPval(a,b,c,d)
+    
+    def DisplayBoard(self):
+        board = [[Empty for _ in range(self.size)] for _ in range(self.size)]
+        for i in range(self.b_start):
+            for j in range(self.b_end):
+                board[i-4][j-4] = self.cell[i][j].piece
+        
+        for i in range(len(board)):
+            board[i] = [str(i)] + board[i]
+
+        tmp = [str(i) for i in range(len(board[0]))]
+        tmp = ['None'] + tmp
+        board = [tmp] + board
+        print ('\n')
+        for lis in board:
+            print (lis)
+            print ('\n')
+
   
 
         
