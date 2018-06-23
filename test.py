@@ -1,4 +1,5 @@
 from AI import *
+import time
 
 pickle = AI()
 
@@ -22,9 +23,12 @@ def gomocup():
             pickle.DelMove()
             pickle.DisplayBoard()
         elif command == 'BEGIN':    #Ai开始
+            time0 = time.time()
             best = pickle.TurnBest()
+            time1 = time.time()
             pickle.TurnMove(best)
             pickle.DisplayBoard()
+            print (time1-time0)
         elif command == 'TURN': #
             s = input('Location (separated by SPACE): ')
             s = s.split()
@@ -32,9 +36,12 @@ def gomocup():
             tmp = Pos()
             tmp.x, tmp.y = x, y
             pickle.TurnMove(tmp)
+            time0 = time.time()
             best = pickle.TurnBest()
+            time1 = time.time()
             pickle.TurnMove(best)
             pickle.DisplayBoard()
+            print (time1-time0)
         elif command == 'END':
             break
 

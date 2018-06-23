@@ -1,5 +1,5 @@
 import random
-from numba import jit
+import copy
 
 win = 7             # 连五
 flex4 = 6           # 活四
@@ -104,6 +104,7 @@ class Board(object):
     
     def CheckXy(self, x, y):
         # if is ouf of boundary
+        x, y = int(x), int(y)
         return self.cell[x][y].piece != Outside
     
     def LastMove(self):
@@ -139,7 +140,6 @@ class Board(object):
                 self.zobrist[Me][i][j] = self.Rand64()
                 self.zobrist[Opponent][i][j] = self.Rand64()
 
-    #@jit
     def SetSize(self, size=20):
         self.size = size
         self.b_start = 4
@@ -152,14 +152,14 @@ class Board(object):
                     self.cell[i][j].piece = Empty
     
     def MakeMove(self, pos):
-        x = pos.x
-        y = pos.y
+        x = int(pos.x)
+        y = int(pos.y)
 
         self.cell[x][y].piece = self.who
         self.zobristKey ^= self.zobrist[self.who][x][y]
         self.who = 3 - self.who # change people
         self.opp = 3 - self.opp
-        self.remMove[self.step] = pos
+        self.remMove[self.step] = copy.deepcopy(pos)    # notice
         self.step += 1
         self.UpdateType(x, y)
 
@@ -177,6 +177,7 @@ class Board(object):
         self.who = 3 - self.who # change people
         self.opp = 3 - self.opp
         self.zobristKey ^= self.zobrist[self.who][x][y]
+        self.cell[x][y].piece = Empty
         self.UpdateType(x, y)   # implement later
 
         for i in range(x-2, x+3):
@@ -190,7 +191,7 @@ class Board(object):
         if self.step >= 2:
             self.DelMove()
             #self.DelMove() #change
-        elif step == 1:
+        elif self.step == 1:
             self.DelMove()
     
     def ReStart(self):
@@ -202,7 +203,7 @@ class Board(object):
         '''
         self.__init__()
     
-    #@jit(nopython=True)
+    #@autojit
     def UpdateType(self, x, y):
         # 更新棋型
         a = 0
@@ -234,7 +235,7 @@ class Board(object):
                 b -= dy[i]
                 k += 1
     
-    #@jit(nopython=True)
+    #@autojit
     def GetKey(self, x, y, i):
         # get the key on direction i
         # like encoding
@@ -251,7 +252,7 @@ class Board(object):
                 k += 1
         return key
     
-    def LineType(self, role, key):
+    def LineType(self, role, key):  # importnt
         # like decoding
         line_left = [0 for _ in range(9)]
         line_right = [0 for _ in range(9)]
@@ -263,7 +264,6 @@ class Board(object):
                 line_left[i] = key & 3  # 3 is b11, we actually get self.cell[a][b].piece in line 243
                 line_right[8 - i] = key & 3
                 key >>= 2   # two bits
-        
         p1 = self.ShortLine(line_left)
         p2 = self.ShortLine(line_right)
 
@@ -279,7 +279,7 @@ class Board(object):
         else:
             return p2
     
-    #@jit
+    #@autojit
     def CheckFlex3(self, line):
         # 同线双三特判
         role = line[4]  # real number
@@ -292,7 +292,7 @@ class Board(object):
                     return flex3
         return block3
 
-    #@jit
+    #@autojit
     def CheckFlex4(self, line):
         # 同线双四特判
         five = 0
@@ -317,7 +317,7 @@ class Board(object):
         else:
             return block4
     
-    #@jit
+    #@autojit
     def ShortLine(self, line):
         # 判断棋型(单个方向)
         kong = 0
@@ -429,20 +429,20 @@ class Board(object):
     
     def DisplayBoard(self):
         board = [[Empty for _ in range(self.size)] for _ in range(self.size)]
-        for i in range(self.b_start):
-            for j in range(self.b_end):
+        for i in range(self.b_start, self.b_end):
+            for j in range(self.b_start, self.b_end):
                 board[i-4][j-4] = self.cell[i][j].piece
         
         for i in range(len(board)):
-            board[i] = [str(i)] + board[i]
+            board[i] = [(2-len(str(i)))*'0' + str(i)] + board[i]
 
-        tmp = [str(i) for i in range(len(board[0]))]
-        tmp = ['None'] + tmp
+        tmp = [i if i < 10 else i - 10 for i in range(self.size)]
+        tmp = ['NN'] + tmp
         board = [tmp] + board
         print ('\n')
         for lis in board:
             print (lis)
-            print ('\n')
+        print ('\n')
 
   
 

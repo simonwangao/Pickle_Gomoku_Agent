@@ -1,5 +1,6 @@
 from board import *
 import time
+import random
 
 whoVal = [ 0, 3, 18, 27, 144, 216, 1200, 1800 ]
 oppVal = [ 0, 2, 12, 18, 96, 144, 800, 1200 ]
@@ -12,7 +13,7 @@ class AI(Board):
         self.hashCount = 0          # hash表命中次数
         self.searchDepth = 0        # 实际搜索深度
         self.bestPoint = Point()
-        self.bestLine = Line        # Line
+        self.bestLine = Line()      # Line
         self.stopThink = False
         self.Npoint = 0
         self.start = 0              # time
@@ -22,9 +23,10 @@ class AI(Board):
         return time.time() - self.start
     
     def StopTime(self):
-        # change, 7s
-        return 7
+        # seconds
+        return 30   #change
     
+    #@jit
     def ProbeHash(self, depth, alpha, beta):
         # 查询置换表
         phashe = self.hashTable[ self.zobristKey & (hashSize - 1) ]
@@ -38,6 +40,7 @@ class AI(Board):
                     return phashe.val
         return unknown
     
+    #@jit
     def RecordHash(self, depth, val, hashf):
         # 写入置换表
         phashe = self.hashTable[ self.zobristKey & (hashSize - 1) ]
@@ -60,8 +63,19 @@ class AI(Board):
 
         bestMove = Pos()
         if self.step == 0:
-            bestMove.x = self.size / 2 + 4
-            bestMove.y = self.size / 2 + 4
+            bestMove.x = int(self.size / 2 + 4)
+            bestMove.y = int(self.size / 2 + 4)
+            return bestMove
+        
+        if self.step == 1 or self.step == 2:
+            flag = True
+            rx, ry = 0, 0
+            while flag or not self.CheckXy(rx, ry) or self.cell[rx][ry].piece != Empty:
+                flag = False
+                rx = int(self.remMove[0].x + random.randint(0, self.step * 2) - self.step)
+                ry = int(self.remMove[0].y + random.randint(0, self.step * 2) - self.step)
+            bestMove.x = rx
+            bestMove.y = ry
             return bestMove
         
         # Iterative Deepening Search
@@ -75,7 +89,9 @@ class AI(Board):
             if self.stopThink or ( self.searchDepth >= 10 and self.GetTime() >= 1.0 \
                                     and self.GetTime() > self.StopTime() ):
                 break
+            print (self.searchDepth)    # change
             self.searchDepth += 2
+        print (self.searchDepth)
         bestMove = self.bestPoint.p
         return bestMove
     
@@ -107,8 +123,10 @@ class AI(Board):
             p = self.rootMove[i].p
             if not self.IsLose[p.x][p.y]:
                 self.MakeMove(p)
-                while True:
+                flag = True
+                while flag:
                     # pvs
+                    flag = False
                     if i > 0 and alpha + 1 < beta:
                         val = -self.AlphaBeta(depth-1, -alpha - 1, -alpha, line)
                         if val <= alpha or val >= beta:
@@ -139,6 +157,7 @@ class AI(Board):
                         return best
         return best
 
+    #@autojit
     def MoveNext(self, moveList):
         # 获取下一步着法, moveList is MoveList
         # phase0: 置换表着法
@@ -151,7 +170,7 @@ class AI(Board):
                 moveList.hashMove = e.best
                 return e.best
         
-        elif moveList.phase == 1:
+        if moveList.phase == 1:
             moveList.phase = 2
             moveList.n = self.GetMove(moveList.moves)
             moveList.index = 0
@@ -163,16 +182,17 @@ class AI(Board):
                         moveList.n -= 1
                         break
         
-        elif moveList.phase == 2:
+        if moveList.phase == 2:
             if moveList.index < moveList.n:
                 moveList.index += 1
                 return moveList.moves[ moveList.index - 1 ]
-        else:
-            p = Pos()
-            p.x = -1
-            p.y = -1
-            return p
+        #else:
+        p = Pos()
+        p.x = -1
+        p.y = -1
+        return p
     
+    #@autojit
     def RecordPVS(self, best):
         # 记录pv着法, best is Pos
         e = self.pvsTable[ self.zobristKey%pvsSize ]
@@ -218,7 +238,9 @@ class AI(Board):
 
         while p.x != -1:
             self.MakeMove(p)
-            while True:
+            flag = True
+            while flag:
+                flag = False
                 if not moveList.first and alpha + 1 < beta:
                     val = - self.AlphaBeta(depth-1, -alpha-1, -alpha, line)
                     if val <= alpha or val >= beta:
@@ -246,13 +268,14 @@ class AI(Board):
                     pline.n = line.n + 1
             
             p = self.MoveNext(moveList)
-            moveList.first = False
+            moveList.first = False  # not the first child anymore
         
         self.RecordHash(depth, best.val, hashf)
         self.RecordPVS(best.p)
 
         return best.val
     
+    #@autojit
     def CutCand(self, move, cand, candCount):
         # 棋型剪枝
         # move is list of Pos
@@ -283,6 +306,7 @@ class AI(Board):
                     moveCount += 1
         return moveCount
     
+    #@autojit
     def GetMove(self, move):
         # 获取最好的MaxMoves个着法
         # move is a list of Pos
@@ -312,7 +336,7 @@ class AI(Board):
                 move[k] = self.cand[k].p
         return moveCount
     
-    @jit
+    #@autojit
     def sort(self, a, n):
         # a is a list of Point
         for i in range(1, n):
@@ -323,6 +347,7 @@ class AI(Board):
                 j -= 1
             a[j] = key
     
+    #@autojit
     def evaluate(self):
         # 局面估值, important
         whoType = [0 for _ in range(8)] # 记录下子方棋形数
@@ -358,6 +383,7 @@ class AI(Board):
             oppScore += oppType[i] * oppVal[i]
         return whoScore - oppScore
     
+    #@autojit
     def ScoreMove(self, c):
         # 着法打分
         score = {}
@@ -384,4 +410,7 @@ class AI(Board):
 
 
 if __name__ == '__main__':
+    time0 = time.time()
     a = AI()
+    time1 = time.time()
+    print (time1 - time0)
