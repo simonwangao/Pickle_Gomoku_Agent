@@ -344,7 +344,7 @@ class Board(object):
         
         # 计算中间空格
         kong = len2 - count
-        for k in range(3, -1,-1):
+        for k in range(3, -1, -1):
             if line[k] == who:
                 if kong + count > 4:
                     break

@@ -24,7 +24,7 @@ class AI(Board):
     
     def StopTime(self):
         # seconds
-        return 30   #change
+        return 10   #change
     
     #@jit
     def ProbeHash(self, depth, alpha, beta):
@@ -63,10 +63,11 @@ class AI(Board):
 
         bestMove = Pos()
         if self.step == 0:
-            bestMove.x = int(self.size / 2 + 4)
-            bestMove.y = int(self.size / 2 + 4)
+            bestMove.x = int(self.size / 2 + 4) - 1
+            bestMove.y = int(self.size / 2 + 4) - 1
             return bestMove
         
+        '''
         if self.step == 1 or self.step == 2:
             flag = True
             rx, ry = 0, 0
@@ -77,6 +78,7 @@ class AI(Board):
             bestMove.x = rx
             bestMove.y = ry
             return bestMove
+        '''
         
         # Iterative Deepening Search
         self.stopThink = False
@@ -91,12 +93,11 @@ class AI(Board):
                 break
             print (self.searchDepth)    # change
             self.searchDepth += 2
-        print (self.searchDepth)
-        bestMove = self.bestPoint.p
+        bestMove = copy.deepcopy(self.bestPoint.p)
         return bestMove
     
     def minimax(self, depth, alpha, beta, pline):
-        best = self.rootMove[0]
+        best =  copy.deepcopy(self.rootMove[0])
         line = Line()
         line.n = 0
 
@@ -106,13 +107,13 @@ class AI(Board):
             if self.rootCount == 1:
                 # 只存在一个可行着法，直接返回
                 self.stopThink = True
-                best.p = moves[0]
+                best.p = copy.deepcopy(moves[0])
                 best.val = 0
                 pline.n = 0
                 return best
 
             for i in range(self.rootCount):
-                self.rootMove[i].p = moves[i]
+                self.rootMove[i].p = copy.deepcopy(moves[i])
         else:
             self.sort(self.rootMove, self.rootCount)
 
@@ -120,7 +121,7 @@ class AI(Board):
         val = 0
         for i in range(self.rootCount):
             # 搜索非必败点
-            p = self.rootMove[i].p
+            p = copy.deepcopy(self.rootMove[i].p)
             if not self.IsLose[p.x][p.y]:
                 self.MakeMove(p)
                 flag = True
@@ -147,9 +148,9 @@ class AI(Board):
                     best.p = p
                     best.val = val
                     # 保存最佳路线
-                    pline.moves[0] = p
+                    pline.moves[0] = copy.deepcopy(p)
                     for j in range(line.n):
-                        pline.moves[j+1] = line.moves[j]
+                        pline.moves[j+1] = copy.deepcopy(line.moves[j])
                     pline.n = line.n + 1
                     # 找到必胜
                     if val == 10000:
@@ -178,14 +179,14 @@ class AI(Board):
                 for i in range(moveList.n):
                     if moveList.moves[i].x == moveList.hashMove.x and moveList.moves[i].y == moveList.hashMove.y:
                         for j in range(i+1, moveList.n):
-                            moveList.moves[j-1] = moveList.moves[j]
+                            moveList.moves[j-1] = copy.deepcopy(moveList.moves[j])
                         moveList.n -= 1
                         break
         
         if moveList.phase == 2:
             if moveList.index < moveList.n:
                 moveList.index += 1
-                return moveList.moves[ moveList.index - 1 ]
+                return copy.deepcopy(moveList.moves[ moveList.index - 1 ])
         #else:
         p = Pos()
         p.x = -1
@@ -262,9 +263,9 @@ class AI(Board):
                 if val > alpha:
                     hashf = hash_exact
                     alpha = val
-                    pline.moves[0] = p
+                    pline.moves[0] = copy.deepcopy(p)
                     for j in range(line.n):
-                        pline.moves[j+1] = line.moves[j]
+                        pline.moves[j+1] = copy.deepcopy(line.moves[j])
                     pline.n = line.n + 1
             
             p = self.MoveNext(moveList)
@@ -284,14 +285,14 @@ class AI(Board):
         moveCount = 0
         if cand[0].val >= 2400:
             # 存在活四以上的棋形，返回最高分的点
-            move[0] = cand[0].p
+            move[0] = copy.deepcopy(cand[0].p)
             moveCount += 1
         elif cand[0].val == 1200:
             # 此时对方存在活三，返回对方活四点和双方冲四点
-            move[0] = cand[0].p
+            move[0] = copy.deepcopy(cand[0].p)
             moveCount += 1
             if cand[1].val == 1200:
-                move[1] = cand[1].p
+                move[1] = copy.deepcopy(cand[1].p)
                 moveCount += 1
             p = Cell()
             if candCount < MaxMoves:
@@ -302,7 +303,7 @@ class AI(Board):
             for i in range(moveCount, n):
                 p = self.cell[cand[i].p.x][cand[i].p.y]
                 if self.IsType(p, self.who, block4) or self.IsType(p, self.opp, block4):
-                    move[moveCount] = cand[i].p
+                    move[moveCount] = copy.deepcopy(cand[i].p)
                     moveCount += 1
         return moveCount
     
@@ -333,7 +334,7 @@ class AI(Board):
             else:
                 moveCount = candCount
             for k in range(moveCount):
-                move[k] = self.cand[k].p
+                move[k] = copy.deepcopy(self.cand[k].p)
         return moveCount
     
     #@autojit
