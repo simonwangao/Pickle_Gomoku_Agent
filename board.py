@@ -45,7 +45,7 @@ class Cell(object):
     def __init__(self):
         self.piece = 0
         self.IsCand = 0
-        self.pattern = [ [0 for _ in range(4)] for _ in range(3) ]  # 3 * 4, we only use the second and third layer
+        self.pattern = [ [0 for _ in range(4)] for _ in range(3) ]  # 3 * 4, 只用第二层和第三层
 
 class Hashe(object):
     def __init__(self):
@@ -141,6 +141,7 @@ class Board(object):
                 self.zobrist[Opponent][i][j] = self.Rand64()
 
     def SetSize(self, size=20):
+        # initialize
         self.size = size
         self.b_start = 4
         self.b_end = size + 4
@@ -222,9 +223,9 @@ class Board(object):
                 a += dx[i]
                 b += dy[i]
                 j += 1
+            
             a = x - dx[i]
             b = y - dy[i]
-
             k = 0
             while k < 4 and self.CheckXy(a, b):
                 key = self.GetKey(a, b, i)
@@ -233,7 +234,7 @@ class Board(object):
                 #update
                 a -= dx[i]
                 b -= dy[i]
-                k += 1
+                k += 1  # why?
     
     #@autojit
     def GetKey(self, x, y, i):
@@ -249,7 +250,7 @@ class Board(object):
                 # update
                 a += dx[i]
                 b += dy[i]
-                k += 1
+                #k += 1
         return key
     
     def LineType(self, role, key):  # importnt

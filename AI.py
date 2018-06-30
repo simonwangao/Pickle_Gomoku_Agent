@@ -63,22 +63,22 @@ class AI(Board):
 
         bestMove = Pos()
         if self.step == 0:
+            # 最开始情况
             bestMove.x = int(self.size / 2 + 4) - 1
             bestMove.y = int(self.size / 2 + 4) - 1
             return bestMove
         
-        '''
         if self.step == 1 or self.step == 2:
+            # 前两步，下在第一步附近
             flag = True
             rx, ry = 0, 0
             while flag or not self.CheckXy(rx, ry) or self.cell[rx][ry].piece != Empty:
                 flag = False
-                rx = int(self.remMove[0].x + random.randint(0, self.step * 2) - self.step)
-                ry = int(self.remMove[0].y + random.randint(0, self.step * 2) - self.step)
+                rx = int(self.remMove[0].x + random.choice([-1, 0 ,1]))
+                ry = int(self.remMove[0].y + random.choice([-1, 0 ,1]))
             bestMove.x = rx
             bestMove.y = ry
             return bestMove
-        '''
         
         # Iterative Deepening Search
         self.stopThink = False
@@ -145,7 +145,7 @@ class AI(Board):
 
                 if val > alpha:
                     alpha = val
-                    best.p = p
+                    best.p = copy.deepcopy(p)
                     best.val = val
                     # 保存最佳路线
                     pline.moves[0] = copy.deepcopy(p)
@@ -168,8 +168,8 @@ class AI(Board):
             moveList.phase = 1
             e = self.pvsTable[ self.zobristKey%pvsSize ]
             if e.key == self.zobristKey:
-                moveList.hashMove = e.best
-                return e.best
+                moveList.hashMove = copy.deepcopy(e.best)
+                return copy.deepcopy(e.best)
         
         if moveList.phase == 1:
             moveList.phase = 2
@@ -178,7 +178,8 @@ class AI(Board):
             if not moveList.first:
                 for i in range(moveList.n):
                     if moveList.moves[i].x == moveList.hashMove.x and moveList.moves[i].y == moveList.hashMove.y:
-                        for j in range(i+1, moveList.n):
+                        end_ = moveList.n
+                        for j in range(i+1, end_):
                             moveList.moves[j-1] = copy.deepcopy(moveList.moves[j])
                         moveList.n -= 1
                         break
@@ -187,7 +188,6 @@ class AI(Board):
             if moveList.index < moveList.n:
                 moveList.index += 1
                 return copy.deepcopy(moveList.moves[ moveList.index - 1 ])
-        #else:
         p = Pos()
         p.x = -1
         p.y = -1
@@ -233,7 +233,7 @@ class AI(Board):
 
         p = self.MoveNext(moveList)
         best = Point()
-        best.p = p
+        best.p = copy.deepcopy(p)
         best.val = -10000
         hashf = hash_alpha
 
@@ -259,7 +259,7 @@ class AI(Board):
             
             if val > best.val:
                 best.val = val
-                best.p = p
+                best.p = copy.deepcopy(p)
                 if val > alpha:
                     hashf = hash_exact
                     alpha = val
@@ -294,13 +294,13 @@ class AI(Board):
             if cand[1].val == 1200:
                 move[1] = copy.deepcopy(cand[1].p)
                 moveCount += 1
-            p = Cell()
             if candCount < MaxMoves:
                 n = candCount
             else:
                 n = MaxMoves
             
-            for i in range(moveCount, n):
+            start_ = moveCount
+            for i in range(start_, n):
                 p = self.cell[cand[i].p.x][cand[i].p.y]
                 if self.IsType(p, self.who, block4) or self.IsType(p, self.opp, block4):
                     move[moveCount] = copy.deepcopy(cand[i].p)
@@ -405,9 +405,13 @@ class AI(Board):
     def TurnBest(self):
         # 返回最佳点
         best = self.gobang()
+        #print ( [ (thing.x-4, thing.y-4) for thing in self.bestLine.moves ] )
         best.x -= 4
         best.y -= 4
         return best
+    
+    def SetStart(self, step):
+        self.step = step
 
 
 if __name__ == '__main__':
