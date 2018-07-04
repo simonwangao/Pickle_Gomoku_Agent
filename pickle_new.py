@@ -1,35 +1,13 @@
-import random
 import pisqpipe as pp
 from pisqpipe import DEBUG_EVAL, DEBUG
-from AI import *
+import threat_space_search as TSS
 
-pp.infotext = 'name="pbrain-pickle", author="Ao Wang 15300240004", version="1.0", country="China"'
+pp.infotext = 'name="pickle", author="Ao Wang", version="1.0", country="China"'
 
-MAX_BOARD = 20
+MAX_BOARD = 100
 board = [[0 for i in range(MAX_BOARD)] for j in range(MAX_BOARD)]
 
-pickle = AI()
-
-'''
-# define a file for logging ...
-DEBUG_LOGFILE = "C:\\Users\\wanga\\Desktop\\pbrain-pickle.log"
-# ...and clear it initially
-with open(DEBUG_LOGFILE,"w") as f:
-	pass
-
-# define a function for writing messages to the file
-def logDebug(msg):
-    with open(DEBUG_LOGFILE,"a") as f:
-        f.write(msg+"\n")
-        f.flush()
-
-def logTraceBack():
-    import traceback
-    with open(DEBUG_LOGFILE,"a") as f:
-        traceback.print_exc(file=f)
-        f.flush()
-    raise
-'''
+#C:\Users\wanga\AppData\Local\Programs\Python\Python36\Scripts\pyinstaller.exe
 
 def brain_init():
 	if pp.width < 5 or pp.height < 5:
@@ -41,14 +19,13 @@ def brain_init():
 	pp.pipeOut("OK")
 
 def brain_restart():
-    pickle.ReStart()
-    for x in range(pp.width):
-        for y in range(pp.height):
-            board[x][y] = 0
-    pp.pipeOut("OK")
+	for x in range(pp.width):
+		for y in range(pp.height):
+			board[x][y] = 0
+	pp.pipeOut("OK")
 
 def isFree(x, y):
-	return x >= 0 and y >= 0 and x < pp.width and y < pp.height and board[x][y] == 0 #and pickle.cell[x+4][y+4].piece == Empty
+	return x >= 0 and y >= 0 and x < pp.width and y < pp.height and board[x][y] == 0
 
 def brain_my(x, y):
 	if isFree(x,y):
@@ -57,14 +34,10 @@ def brain_my(x, y):
 		pp.pipeOut("ERROR my move [{},{}]".format(x, y))
 
 def brain_opponents(x, y):
-    if isFree(x,y):
-        board[x][y] = 2
-
-        tmp = Pos()
-        tmp.x, tmp.y = x, y
-        pickle.TurnMove(tmp)
-    else:
-        pp.pipeOut("ERROR opponents's move [{},{}]".format(x, y))
+	if isFree(x,y):
+		board[x][y] = 2
+	else:
+		pp.pipeOut("ERROR opponents's move [{},{}]".format(x, y))
 
 def brain_block(x, y):
 	if isFree(x,y):
@@ -73,43 +46,26 @@ def brain_block(x, y):
 		pp.pipeOut("ERROR winning move [{},{}]".format(x, y))
 
 def brain_takeback(x, y):
-    pickle.DelMove()
-    if x >= 0 and y >= 0 and x < pp.width and y < pp.height and board[x][y] != 0:
-        board[x][y] = 0
-        return 0
-    return 2
+	if x >= 0 and y >= 0 and x < pp.width and y < pp.height and board[x][y] != 0:
+		board[x][y] = 0
+		return 0
+	return 2
 
-def brain_turn():
-    '''
-	if pp.terminateAI:
-		return
-	i = 0
-	while True:
-		x = random.randint(0, pp.width)
-		y = random.randint(0, pp.height)
-		i += 1
-		if pp.terminateAI:
-			return
-		if isFree(x,y):
-			break
-	if i > 1:
-		pp.pipeOut("DEBUG {} coordinates didn't hit an empty field".format(i))
-	'''
-    step = 0
-    total = 0
+def brain_turn():	# change
+    if pp.terminateAI:
+        return
+    
+    current_board = [ [] for _ in range(pp.width) ]
+    
     for i in range(pp.width):
         for j in range(pp.height):
-            if board[i][j] != 0:
-                step += 1
-                total += board[i][j]
-
-    if pickle.step == 0:
-        pickle.SetStart(step)
+            current_board[i].append( board[i][j] )
 	
-    best = pickle.TurnBest()
-    x, y = best.x, best.y
+    pro = TSS.Problem(pp.width, TSS.AI(), current_board)
+    res = pro.my_move()
+    x, y = res
+    
     pp.do_mymove(x, y)
-    pickle.TurnMove(best)
 
 def brain_end():
 	pass
