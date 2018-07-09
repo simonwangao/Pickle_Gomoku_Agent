@@ -1,7 +1,7 @@
 # Pickle Gomoku Agent
 The Gomoku (Five in a Row) agent __Pickle__ for the project of Artificial Intelligence (DATA130008.01) @Fudan University  
 
-Pickle is based on threat space search, which is a rather strong searching algorithm.  
+Pickle is based on [threat space search](http://ai.csie.ndhu.edu.tw/paper/200612071659502.pdf), which is a rather strong searching algorithm.  
 Support [Gomocup](http://gomocup.org) protocol.  
   
 Using Pyinstaller to get the exe package:  
